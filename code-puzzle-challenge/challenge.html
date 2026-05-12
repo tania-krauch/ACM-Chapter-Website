@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3×3 Image Puzzle</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    h2 {
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      margin: 0;
+    }
+
+    .timer-display {
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px 20px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .toggle-btn {
+      background: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .toggle-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .toggle-btn:disabled {
+      background: #ccc;
+      color: #666;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .toggle-btn:disabled:hover {
+      transform: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .toggle-btn.active {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .puzzle-wrapper {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .reference-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .reference-image {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      opacity: 0.7;
+    }
+
+    .reference-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 0;
+      border: 1px solid #888;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .tile {
+      background-color: white;
+      background-size: 300% 300%;
+      background-repeat: no-repeat;
+      border: 0.5px solid #aaa;
+      box-sizing: border-box;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .tile:hover {
+      filter: brightness(1.05);
+      transform: scale(1.01);
+      z-index: 10;
+      border-color: #666;
+    }
+
+    .tile.selected {
+      border: 2px solid #2196F3;
+      box-shadow: inset 0 0 0 2px rgba(33, 150, 243, 0.3), 0 0 12px rgba(33, 150, 243, 0.5);
+      z-index: 20;
+    }
+
+    .loading {
+      font-size: 18px;
+      color: #666;
+    }
+
+    /* Completion Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: white;
+      margin: 10% auto;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-content h3 {
+      color: #333;
+      margin: 0 0 10px 0;
+      font-size: 24px;
+    }
+
+    .modal-content p {
+      color: #666;
+      margin: 0 0 20px 0;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #666;
+    }
+
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+
+    .completion-stats {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .completion-stats p {
+      margin: 5px 0;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>🧩 3×3 Image Puzzle</h2>
+    
+    <div class="timer-display">
+      ⏱️ Time: <span id="timer">0:00</span>
+    </div>
+    
+    <div class="controls">
+      <button class="toggle-btn" id="toggleHints" disabled>Show Position Hints (available in <span id="hintsCountdown">1:00</span>)</button>
+      <button class="toggle-btn" id="toggleReference" disabled>Show Reference (available in <span id="refCountdown">1:00</span>)</button>
+    </div>
+
+    <div class="puzzle-wrapper">
+      <div class="reference-container" id="referenceContainer" style="display: none;">
+        <div class="reference-label">Reference Image</div>
+        <img id="referenceImage" class="reference-image" alt="Reference">
+      </div>
+      
+      <div class="board" id="board">
+        <div class="loading">Loading puzzle...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completion Modal -->
+  <div id="completionModal" class="modal">
+    <div class="modal-content">
+      <h3>🎉 Puzzle Solved!</h3>
+      <p>Congratulations! You completed the puzzle!</p>
+      
+      <div class="completion-stats">
+        <p><strong>⏱️ Time:</strong> <span id="modalTime"></span></p>
+        <p><strong>💡 Used Hints:</strong> <span id="modalHints"></span></p>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn-secondary" onclick="closeCompletionModal()">Close</button>
+        <button class="btn-primary" onclick="restartPuzzle()">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    class ImagePuzzleGame {
+      constructor(imagePath) {
+        this.rows = 3;
+        this.cols = 3;
+        this.imagePath = imagePath;
+        this.boardEl = document.getElementById("board");
+        this.referenceContainer = document.getElementById("referenceContainer");
+        this.referenceImage = document.getElementById("referenceImage");
+        this.timerEl = document.getElementById("timer");
+        this.hintsBtn = document.getElementById("toggleHints");
+        this.referenceBtn = document.getElementById("toggleReference");
+        this.hintsCountdown = document.getElementById("hintsCountdown");
+        this.refCountdown = document.getElementById("refCountdown");
+        this.selectedIndex = null;
+        
+        // Timer variables
+        this.startTime = null;
+        this.timerInterval = null;
+        this.isGameComplete = false;
+        this.hintsAvailable = false; // Hints start as unavailable
+        
+        // Visual aid states
+        this.showHints = false;
+        this.showReference = false;
+        
+        // Store original indices (0-8)
+        this.tiles = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+        
+        this.loadImage();
+        this.setupControls();
+      }
+
+      setupControls() {
+        this.hintsBtn.addEventListener('click', (e) => {
+          if (!this.hintsAvailable) return;
+          this.showHints = !this.showHints;
+          e.target.classList.toggle('active', this.showHints);
+          this.render();
+        });
+
+        this.referenceBtn.addEventListener('click', (e) => {
+          if (!this.hintsAvailable) return;
+          this.showReference = !this.showReference;
+          e.target.classList.toggle('active', this.showReference);
+          this.referenceContainer.style.display = this.showReference ? 'flex' : 'none';
+        });
+      }
+
+      loadImage() {
+        const img = new Image();
+        img.onload = () => {
+          this.imageWidth = img.naturalWidth;
+          this.imageHeight = img.naturalHeight;
+          this.tileWidth = this.imageWidth / this.cols;
+          this.tileHeight = this.imageHeight / this.rows;
+          
+          // Setup reference image
+          this.referenceImage.src = this.imagePath;
+          this.referenceImage.style.width = (this.imageWidth * 0.5) + 'px';
+          this.referenceImage.style.height = (this.imageHeight * 0.5) + 'px';
+          
+          this.setupBoard();
+          this.shuffleTiles();
+          this.render();
+        };
+        img.onerror = () => {
+          this.boardEl.innerHTML = '<div class="loading">Error loading image</div>';
+        };
+        img.src = this.imagePath;
+      }
+
+      setupBoard() {
+        // Set the board size to match the image
+        this.boardEl.style.width = this.imageWidth + 'px';
+        this.boardEl.style.height = this.imageHeight + 'px';
+        
+        // Start the timer
+        this.startTimer();
+      }
+
+      startTimer() {
+        this.startTime = Date.now();
+        this.timerInterval = setInterval(() => {
+          if (!this.isGameComplete) {
+            this.updateTimer();
+            this.updateHintsCooldown();
+          }
+        }, 100); // Update every 100ms for smooth display
+      }
+
+      updateTimer() {
+        const elapsed = Date.now() - this.startTime;
+        const seconds = Math.floor(elapsed / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        
+        this.timerEl.textContent = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+      }
+
+      updateHintsCooldown() {
+        const elapsed = Date.now() - this.startTime;
+        const seconds = Math.floor(elapsed / 1000);
+        
+        if (seconds < 60) {
+          // Still in cooldown - update countdown
+          const remainingSeconds = 60 - seconds;
+          const countdownText = `0:${remainingSeconds.toString().padStart(2, '0')}`;
+          this.hintsCountdown.textContent = countdownText;
+          this.refCountdown.textContent = countdownText;
+        } else if (!this.hintsAvailable) {
+          // Cooldown complete - enable hints
+          this.hintsAvailable = true;
+          this.hintsBtn.disabled = false;
+          this.hintsBtn.textContent = 'Show Position Hints';
+          this.referenceBtn.disabled = false;
+          this.referenceBtn.textContent = 'Show Reference';
+        }
+      }
+
+      stopTimer() {
+        if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+        }
+      }
+
+      getFormattedTime() {
+        const elapsed = Date.now() - this.startTime;
+        const totalSeconds = Math.floor(elapsed / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        
+        if (minutes === 0) {
+          return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+        } else if (minutes === 1 && seconds === 0) {
+          return '1 minute';
+        } else if (seconds === 0) {
+          return `${minutes} minutes`;
+        } else {
+          return `${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}`;
+        }
+      }
+
+      showCompletionModal() {
+        const modal = document.getElementById('completionModal');
+        const timeString = this.getFormattedTime();
+        const usedHints = this.showHints || this.showReference ? 'Yes' : 'No';
+        
+        document.getElementById('modalTime').textContent = timeString;
+        document.getElementById('modalHints').textContent = usedHints;
+        
+        modal.style.display = 'block';
+      }
+
+      shuffleTiles() {
+        // Fisher–Yates shuffle
+        for (let i = this.tiles.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [this.tiles[i], this.tiles[j]] = [this.tiles[j], this.tiles[i]];
+        }
+      }
+
+      render() {
+        this.boardEl.innerHTML = "";
+
+        this.tiles.forEach((originalIndex, currentIndex) => {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          
+          // Show hints if enabled
+          if (this.showHints) {
+            // Convert 0-8 to position labels (A1-C3)
+            const hintRow = Math.floor(originalIndex / this.cols);
+            const hintCol = originalIndex % this.cols;
+            const rowLabel = String.fromCharCode(65 + hintRow); // A, B, C
+            const colLabel = hintCol + 1; // 1, 2, 3
+            const hintLabel = `${rowLabel}${colLabel}`;
+            
+            // Add hint as text overlay
+            const hintEl = document.createElement('div');
+            hintEl.style.position = 'absolute';
+            hintEl.style.top = '4px';
+            hintEl.style.right = '6px';
+            hintEl.style.fontSize = '11px';
+            hintEl.style.fontWeight = 'bold';
+            hintEl.style.color = 'rgba(100, 100, 100, 0.6)';
+            hintEl.style.textShadow = '0 0 3px white';
+            hintEl.style.pointerEvents = 'none';
+            hintEl.textContent = hintLabel;
+            tile.appendChild(hintEl);
+          }
+          
+          // Set tile dimensions
+          tile.style.width = this.tileWidth + 'px';
+          tile.style.height = this.tileHeight + 'px';
+          
+          // Calculate which part of the image this tile should show
+          // based on its ORIGINAL position (before shuffling)
+          const originalRow = Math.floor(originalIndex / this.cols);
+          const originalCol = originalIndex % this.cols;
+          
+          // Set background image and position
+          tile.style.backgroundImage = `url('${this.imagePath}')`;
+          tile.style.backgroundPosition = 
+            `-${originalCol * this.tileWidth}px -${originalRow * this.tileHeight}px`;
+
+          // Add click handler
+          tile.addEventListener("click", () => {
+            if (this.selectedIndex === null) {
+              // First click: select tile
+              this.selectedIndex = currentIndex;
+              this.render();
+            } else if (this.selectedIndex === currentIndex) {
+              // Click same tile again: deselect
+              this.selectedIndex = null;
+              this.render();
+            } else {
+              // Second click: swap tiles
+              [this.tiles[this.selectedIndex], this.tiles[currentIndex]] =
+                [this.tiles[currentIndex], this.tiles[this.selectedIndex]];
+
+              this.selectedIndex = null;
+
+              if (this.checkWin()) {
+                this.isGameComplete = true;
+                this.stopTimer();
+                this.showCompletionModal();
+              }
+
+              this.render();
+            }
+          });
+
+          // Apply selection style
+          if (currentIndex === this.selectedIndex) {
+            tile.classList.add("selected");
+          }
+
+          this.boardEl.appendChild(tile);
+        });
+      }
+
+      checkWin() {
+        for (let i = 0; i < this.tiles.length; i++) {
+          if (this.tiles[i] !== i) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+
+    // Start the game with your image
+    new ImagePuzzleGame('weekly_challenge/python_riddle.png');
+
+    // Modal functions
+    function closeCompletionModal() {
+      document.getElementById('completionModal').style.display = 'none';
+    }
+
+    function restartPuzzle() {
+      window.location.reload();
+    }
+  </script>
+</body>
+</html>
