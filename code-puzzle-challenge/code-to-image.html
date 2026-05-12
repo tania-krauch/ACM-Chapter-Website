@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Code to Puzzle Image Generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      padding: 30px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .section h2 {
+      color: #444;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    textarea {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      resize: vertical;
+      min-height: 200px;
+      transition: border-color 0.3s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    select, input[type="number"], input[type="color"] {
+      padding: 8px 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      cursor: pointer;
+      margin: 0;
+    }
+
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    button:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .preview-section {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    #preview {
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      padding: 20px;
+      background: #f9f9f9;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #codeCanvas {
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border-radius: 4px;
+    }
+
+    .download-section {
+      display: flex;
+      gap: 10px;
+    }
+
+    .download-section button {
+      flex: 1;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1565C0;
+      line-height: 1.6;
+    }
+
+    .grid-overlay-preview {
+      position: relative;
+    }
+
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Code to Puzzle Image Generator</h1>
+    <p class="subtitle">Create beautiful, puzzle-friendly images from your code snippets</p>
+    
+    <div class="layout">
+      <!-- Input Section -->
+      <div class="section">
+        <h2>⚙️ Configuration</h2>
+        
+        <div class="input-group">
+          <label for="codeInput">Code Snippet:</label>
+          <textarea id="codeInput" placeholder="Paste your code here...">nums = [2, 4, 6, 8]
+total = 0
+
+for i in range(len(nums)):
+    if nums[i] % 4 == 0:
+        total += i
+
+print(total)</textarea>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-item">
+            <label for="fontSize">Font Size:</label>
+            <input type="number" id="fontSize" value="24" min="12" max="48" step="2">
+          </div>
+
+          <div class="control-item">
+            <label for="padding">Padding:</label>
+            <input type="number" id="padding" value="40" min="10" max="100" step="5">
+          </div>
+
+          <div class="control-item">
+            <label for="bgColor">Background Color:</label>
+            <input type="color" id="bgColor" value="#f5f5f5">
+          </div>
+
+          <div class="control-item">
+            <label for="textColor">Text Color:</label>
+            <input type="color" id="textColor" value="#333333">
+          </div>
+
+          <div class="control-item">
+            <label for="theme">Color Theme:</label>
+            <select id="theme">
+              <option value="default">Default</option>
+              <option value="syntax">Syntax Highlighting</option>
+              <option value="minimal">Minimal</option>
+              <option value="ocean">Ocean</option>
+              <option value="sunset">Sunset</option>
+            </select>
+          </div>
+
+          <div class="control-item">
+            <label for="fontFamily">Font Family:</label>
+            <select id="fontFamily">
+              <option value="'Courier New', monospace">Courier New</option>
+              <option value="'Monaco', monospace">Monaco</option>
+              <option value="'Consolas', monospace">Consolas</option>
+              <option value="'Ubuntu Mono', monospace">Ubuntu Mono</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-item">
+          <label for="bgPattern">Background Pattern:</label>
+          <select id="bgPattern">
+            <option value="none">None</option>
+            <option value="dots">Dots</option>
+            <option value="grid">Grid</option>
+            <option value="diagonal">Diagonal Lines</option>
+            <option value="waves">Waves</option>
+            <option value="hexagons">Hexagons</option>
+          </select>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="addGradient">
+          <label for="addGradient">Add subtle gradient background</label>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="addGrid" checked>
+          <label for="addGrid">Add 3×3 grid overlay (puzzle guide)</label>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="lineNumbers">
+          <label for="lineNumbers">Show line numbers</label>
+        </div>
+
+        <button onclick="generateImage()">🎨 Generate Image</button>
+
+        <div class="info-box">
+          💡 <strong>Tips:</strong><br>
+          • Add a background pattern to help distinguish white/light puzzle pieces<br>
+          • Enable grid overlay to preview how your code will be divided<br>
+          • Use sufficient padding and font size for readability when split into 9 pieces
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="section">
+        <h2>👁️ Preview</h2>
+        
+        <div class="preview-section">
+          <div id="preview">
+            <canvas id="codeCanvas"></canvas>
+          </div>
+
+          <div class="download-section">
+            <button onclick="downloadImage()">⬇️ Download PNG</button>
+            <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let canvas, ctx;
+
+    function init() {
+      canvas = document.getElementById('codeCanvas');
+      ctx = canvas.getContext('2d');
+      generateImage();
+    }
+
+    function generateImage() {
+      const code = document.getElementById('codeInput').value;
+      const fontSize = parseInt(document.getElementById('fontSize').value);
+      const padding = parseInt(document.getElementById('padding').value);
+      const fontFamily = document.getElementById('fontFamily').value;
+      const theme = document.getElementById('theme').value;
+      const bgPattern = document.getElementById('bgPattern').value;
+      const addGradient = document.getElementById('addGradient').checked;
+      const addGrid = document.getElementById('addGrid').checked;
+      const lineNumbers = document.getElementById('lineNumbers').checked;
+
+      // Get theme colors
+      const colors = getThemeColors(theme);
+
+      // Split code into lines
+      const lines = code.split('\n');
+      
+      // Set font to measure text
+      ctx.font = `${fontSize}px ${fontFamily}`;
+      
+      // Calculate dimensions
+      const lineHeight = fontSize * 1.5;
+      const maxLineWidth = Math.max(...lines.map(line => {
+        const displayLine = lineNumbers ? `  ${lines.indexOf(line) + 1}  ${line}` : line;
+        return ctx.measureText(displayLine).width;
+      }));
+      
+      const canvasWidth = maxLineWidth + padding * 2;
+      const canvasHeight = lines.length * lineHeight + padding * 2;
+      
+      // Set canvas size
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // Draw background
+      if (addGradient && colors.gradient) {
+        const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+        gradient.addColorStop(0, colors.gradient.start);
+        gradient.addColorStop(1, colors.gradient.end);
+        ctx.fillStyle = gradient;
+      } else {
+        ctx.fillStyle = colors.background;
+      }
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Draw background pattern if selected
+      if (bgPattern !== 'none') {
+        drawBackgroundPattern(bgPattern, canvasWidth, canvasHeight, colors);
+      }
+
+      // Draw code
+      ctx.font = `${fontSize}px ${fontFamily}`;
+      ctx.textBaseline = 'top';
+
+      lines.forEach((line, index) => {
+        const y = padding + index * lineHeight;
+        let x = padding;
+
+        if (lineNumbers) {
+          // Draw line number
+          ctx.fillStyle = colors.lineNumber;
+          ctx.fillText(`${index + 1}`, x, y);
+          x += ctx.measureText(`${index + 1}  `).width;
+        }
+
+        // Simple syntax highlighting
+        if (theme === 'syntax') {
+          drawSyntaxHighlightedLine(line, x, y, colors, fontSize, fontFamily);
+        } else {
+          ctx.fillStyle = colors.text;
+          ctx.fillText(line, x, y);
+        }
+      });
+
+      // Draw grid overlay if enabled
+      if (addGrid) {
+        ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]);
+        
+        // Vertical lines
+        for (let i = 1; i < 3; i++) {
+          const x = (canvasWidth / 3) * i;
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvasHeight);
+          ctx.stroke();
+        }
+        
+        // Horizontal lines
+        for (let i = 1; i < 3; i++) {
+          const y = (canvasHeight / 3) * i;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvasWidth, y);
+          ctx.stroke();
+        }
+        
+        ctx.setLineDash([]);
+      }
+    }
+
+    function drawSyntaxHighlightedLine(line, x, y, colors, fontSize, fontFamily) {
+      const keywords = ['for', 'if', 'else', 'elif', 'while', 'def', 'class', 'import', 'from', 'return', 'in', 'range', 'len', 'print'];
+      const operators = ['=', '+', '-', '*', '/', '%', '==', '!=', '<', '>', '<=', '>='];
+      
+      let currentX = x;
+      const tokens = line.split(/(\s+|[=+\-*/%<>!]+|[(),\[\]{}])/);
+      
+      tokens.forEach(token => {
+        if (!token) return;
+        
+        ctx.font = `${fontSize}px ${fontFamily}`;
+        
+        if (keywords.includes(token)) {
+          ctx.fillStyle = colors.keyword;
+          ctx.font = `bold ${fontSize}px ${fontFamily}`;
+        } else if (operators.some(op => token.includes(op))) {
+          ctx.fillStyle = colors.operator;
+        } else if (/^\d+$/.test(token)) {
+          ctx.fillStyle = colors.number;
+        } else if (token.match(/^["'].*["']$/)) {
+          ctx.fillStyle = colors.string;
+        } else {
+          ctx.fillStyle = colors.text;
+        }
+        
+        ctx.fillText(token, currentX, y);
+        currentX += ctx.measureText(token).width;
+      });
+    }
+
+    function drawBackgroundPattern(pattern, width, height, colors) {
+      // Use a very subtle pattern that won't interfere with text
+      ctx.save();
+      ctx.globalAlpha = 0.08; // Very subtle
+      
+      // Determine pattern color - darker or lighter than background
+      const bgLuminance = getLuminance(colors.background);
+      const patternColor = bgLuminance > 0.5 ? '#000000' : '#ffffff';
+      ctx.strokeStyle = patternColor;
+      ctx.fillStyle = patternColor;
+      
+      switch(pattern) {
+        case 'dots':
+          drawDotsPattern(width, height);
+          break;
+        case 'grid':
+          drawGridPattern(width, height);
+          break;
+        case 'diagonal':
+          drawDiagonalPattern(width, height);
+          break;
+        case 'waves':
+          drawWavesPattern(width, height);
+          break;
+        case 'hexagons':
+          drawHexagonsPattern(width, height);
+          break;
+      }
+      
+      ctx.restore();
+    }
+
+    function drawDotsPattern(width, height) {
+      const spacing = 20;
+      for (let x = spacing; x < width; x += spacing) {
+        for (let y = spacing; y < height; y += spacing) {
+          ctx.beginPath();
+          ctx.arc(x, y, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function drawGridPattern(width, height) {
+      const spacing = 20;
+      ctx.lineWidth = 1;
+      
+      for (let x = spacing; x < width; x += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      
+      for (let y = spacing; y < height; y += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawDiagonalPattern(width, height) {
+      const spacing = 15;
+      ctx.lineWidth = 1;
+      
+      for (let i = -height; i < width + height; i += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + height, height);
+        ctx.stroke();
+      }
+    }
+
+    function drawWavesPattern(width, height) {
+      const amplitude = 10;
+      const frequency = 0.05;
+      const spacing = 20;
+      ctx.lineWidth = 1;
+      
+      for (let y = spacing; y < height; y += spacing) {
+        ctx.beginPath();
+        for (let x = 0; x < width; x++) {
+          const wave = Math.sin(x * frequency) * amplitude;
+          if (x === 0) {
+            ctx.moveTo(x, y + wave);
+          } else {
+            ctx.lineTo(x, y + wave);
+          }
+        }
+        ctx.stroke();
+      }
+    }
+
+    function drawHexagonsPattern(width, height) {
+      const size = 15;
+      const xSpacing = size * Math.sqrt(3);
+      const ySpacing = size * 1.5;
+      ctx.lineWidth = 1;
+      
+      for (let row = 0; row < height / ySpacing + 2; row++) {
+        for (let col = 0; col < width / xSpacing + 2; col++) {
+          const x = col * xSpacing + (row % 2 === 1 ? xSpacing / 2 : 0);
+          const y = row * ySpacing;
+          
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i;
+            const hx = x + size * Math.cos(angle);
+            const hy = y + size * Math.sin(angle);
+            if (i === 0) {
+              ctx.moveTo(hx, hy);
+            } else {
+              ctx.lineTo(hx, hy);
+            }
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+      }
+    }
+
+    function getLuminance(color) {
+      // Convert hex to RGB
+      let r, g, b;
+      if (color.startsWith('#')) {
+        const hex = color.substring(1);
+        r = parseInt(hex.substr(0, 2), 16) / 255;
+        g = parseInt(hex.substr(2, 2), 16) / 255;
+        b = parseInt(hex.substr(4, 2), 16) / 255;
+      } else {
+        // Default for non-hex colors
+        return 0.5;
+      }
+      
+      // Calculate relative luminance
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
+    function getThemeColors(theme) {
+      const themes = {
+        default: {
+          background: document.getElementById('bgColor').value,
+          text: document.getElementById('textColor').value,
+          lineNumber: '#999',
+        },
+        syntax: {
+          background: '#f5f5f5',
+          text: '#333',
+          keyword: '#d73a49',
+          operator: '#d73a49',
+          number: '#005cc5',
+          string: '#032f62',
+          lineNumber: '#999',
+        },
+        minimal: {
+          background: '#ffffff',
+          text: '#000000',
+          lineNumber: '#ccc',
+        },
+        ocean: {
+          background: '#e3f2fd',
+          text: '#01579b',
+          gradient: { start: '#e3f2fd', end: '#bbdefb' },
+          lineNumber: '#64b5f6',
+        },
+        sunset: {
+          background: '#fff3e0',
+          text: '#e65100',
+          gradient: { start: '#fff3e0', end: '#ffe0b2' },
+          lineNumber: '#ff9800',
+        }
+      };
+
+      return themes[theme] || themes.default;
+    }
+
+    function downloadImage() {
+      const link = document.createElement('a');
+      link.download = 'puzzle-image.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    async function copyToClipboard() {
+      try {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        alert('✅ Image copied to clipboard!');
+      } catch (err) {
+        alert('❌ Failed to copy to clipboard. Try downloading instead.');
+      }
+    }
+
+    // Auto-generate on input changes
+    document.getElementById('codeInput').addEventListener('input', generateImage);
+    document.getElementById('fontSize').addEventListener('input', generateImage);
+    document.getElementById('padding').addEventListener('input', generateImage);
+    document.getElementById('bgColor').addEventListener('input', generateImage);
+    document.getElementById('textColor').addEventListener('input', generateImage);
+    document.getElementById('theme').addEventListener('change', generateImage);
+    document.getElementById('fontFamily').addEventListener('change', generateImage);
+    document.getElementById('bgPattern').addEventListener('change', generateImage);
+    document.getElementById('addGradient').addEventListener('change', generateImage);
+    document.getElementById('addGrid').addEventListener('change', generateImage);
+    document.getElementById('lineNumbers').addEventListener('change', generateImage);
+
+    // Initialize
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
